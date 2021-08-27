@@ -1,0 +1,282 @@
+---
+title: "Data Cleaning & EDA"
+author: "Beaty"
+date: "8/25/2021"
+output: html_document
+---
+
+
+Analysis on Ads
+
+Data Understanding
+
+1. Define the question:
+
+I am a data scientist working to identify which individuals are most likely to click on my client's ads on her blog.
+
+2. Metric for success:
+
+- Cleaned data.
+- Graphical representation of the relationships in the data as well as the distributions f the different variables in the data.
+- Sound conclusions and recommendations to the client as per the analysis done.
+
+3. Understanding the context:
+
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. 
+
+She currently targets audiences originating from various countries.
+
+In the past, she ran ads to advertise a related course on the same blog and collected data in the process. She would now like to employ my services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads. 
+
+4. Experimental design:
+
+Steps to be undertaken during this study include:
+- Loading the data & needed packages.
+- Exploring the dataset.
+- Cleaning the data.
+- Feature engineering.
+- Exploratory Data Analysis.
+- Conclusions.
+- Recommendations.
+
+5. Data appropriateness:
+
+This will be well checked & described in the data cleaning.
+
+Exploring the data
+```{r}
+# Loading the libraries
+#install.packages("corrplot")
+library("corrplot")
+#install.packages("PerformanceAnalytics")
+library("PerformanceAnalytics")
+#install.packages("ggplot2")
+library("ggplot2")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Loading the data
+data = read.csv(url("http://bit.ly/IPAdvertisingData"))
+
+# Previewing the data
+head(data)
+```
+
+```{r}
+# Checking the shape of the data
+dim(data)
+```
+The dataset has 1000 entries and 10 columns.
+```{r}
+# Checking column names of our data 
+colnames(data)
+```
+Our column titles are as listed above. We shall rename the "Male" column so that it becomes "Gender" then the 0 will represent males, and 0 for females.
+```{r}
+# Renaming "Male" column
+colnames(data)[7] <- "Gender"
+
+# Checking if column name has changed
+colnames(data)
+```
+
+
+Data Cleaning
+
+1. Dealing with missing data
+```{r}
+# Checking for missing values
+null_values = is.na(data)
+null_values
+```
+Our data seems to have no nulls since most of the fields are showing "FALSE" for our code. We shall do a coun to check for the total number of null values.
+```{r}
+length(which(is.na(data)))
+```
+The data has no missing values
+
+2. Checking for duplicates:
+```{r}
+duplicates = duplicated(data)
+duplicates
+```
+The data seems to have no duplicates. We shall do a count just to make sure.
+```{r}
+length(which(duplicated(data)))
+```
+There are no duplicates in our dataset.
+
+3. Checking column data types
+```{r}
+# Checking the columns datatypes
+str(data)
+```
+All our columns have the right data type except for the time. We shall convert it to a timestamp for ease of calculation
+
+```{r}
+# Converting date from character to a timestamp
+data$Timestamp <- as.Date(data$Timestamp)
+
+# Checking data type to confirm change
+str(data)
+
+```
+The data types are all okay now.
+
+4. Checking for outliers
+```{r}
+# Checking for outliers in the numerical columns
+Time_spent = data$Daily.Time.Spent.on.Site
+Age = data$Age
+Income = data$Area.Income
+Internet = data$Daily.Internet.Usage
+Gender = data$Gender
+Clicked = data$Clicked.on.Ad
+
+boxplot(Time_spent, Age, Income, Internet, Gender, Clicked, main = "Boxplots to check for outliers",   names = c("Daily Time Spent on Site", "Age", "Income","Daily Internet Usage", "Gender","Clicked on ad"), horizontal = TRUE)
+
+```
+The columns do not have outliers except the income column which has quite a number of outliers, which may be due to the paygaps that exist in the real world. Thus we shall ignore them for this project.
+
+
+Feature Engineering
+
+We'd like to extract the month and hour from the time stamp so we can derive more insights from it.
+```{r}
+
+data$Month <-  months(data$Timestamp)
+
+head(data)
+```
+
+
+Exploratory Data Analysis
+
+1. Univariate Analysis
+
+Measures of Dispersion
+
+a) Mean
+```{r}
+# Creating a dataframe with only the numeric columns
+data_num = data[,c("Daily.Time.Spent.on.Site", "Age", "Area.Income","Daily.Internet.Usage" ,"Gender", "Clicked.on.Ad" )]
+
+# Preview dataset
+head(data_num)
+
+```
+```{r}
+# Calculating the mean
+
+colMeans(data_num)
+```
+The means for the different columns are as shown in the output above.
+
+b) Mode
+```{r}
+# Create the function.
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# Get the mode for different columns
+getmode(data$Daily.Time.Spent.on.Site)
+getmode(data$Age)
+getmode(data$Area.Income)
+getmode(data$Daily.Internet.Usage)
+getmode(data$City)
+getmode(data$Gender)
+getmode(data$Country)
+getmode(data$Clicked.on.Ad)
+getmode(data$Month)
+
+```
+The most common amount of time spent on the site is 62.26, while the most popular age is 31years. Most of the site visits have an income of 61,833.9. The city with most visitors is Lisamouth while Czech Republic had the most site visitors. I would have expected the city with the most number of visitors to belong to the country with the most visitors, however, Lisamouth had different countries on the dataset provided. Most of the visitors were female, while most didn't click on the ads. The site had most traffic in February.
+
+
+c) Median
+```{r}
+# Calculating median
+median(data$Daily.Time.Spent.on.Site)
+median(data$Age)
+median(data$Area.Income)
+median(data$Daily.Internet.Usage)
+median(data$Gender)
+median(data$Clicked.on.Ad)
+```
+The medians for each column is as shown above
+
+d) Range
+```{r}
+# Calculating the ranges
+range(data$Daily.Time.Spent.on.Site)
+range(data$Age)
+range(data$Area.Income)
+range(data$Daily.Internet.Usage)
+range(data$Gender)
+range(data$Clicked.on.Ad)
+```
+The codes above show the ranges for each of the columns in our dataset
+
+
+Plots:
+```{r}
+# A bar plot showing the distribution of visitors accross different months
+barplot(table(data$Month), main = "Distribution of Visitors across Months", ylab = "No. of visitors", col ="blue", cex.names = 0.7)
+```
+From our plot, we can see that February had the highest site traffic, followed closely by March, then April. July had the least amount of traffic to the site.
+
+```{r}
+# A bar plot showing the gender distribution
+barplot(table(data$Gender),  col =  c("red" , "green"), ylab = "No. of visitors", main = "Distribution of Gender")
+```
+From the plot, we can see that 0, ie females, caused the highest traffic to the site.
+
+```{r}
+# A bar plot showing the distribution of visitors who clicked on the ads
+barplot(table(data$Clicked.on.Ad), main = "Distribution of Visitors who clicked on ads", ylab = "No. of visitors", col ="magenta")
+```
+From the plot, it seems like there was an equal amount of visitors who clicked on ads as well as those who didn't.
+
+
+
+2. Bivariate Analysis
+```{r}
+#Calculating the correlation between columns
+
+correlation = cor(data_num)
+
+# Creating a correlogram to plot our correlation for better presentation
+corrplot(correlation, method="shade", tl.col="black", tl.srt=45)
+```
+From the correlogram above & using the legend on the right, we can see that:
+
+- Daily time spent on the site has a high negative relationship with whether one clicked on an ad. Thus if one spends alot of time on the site, there is a high chance of them not clicking on an ad.
+- There's a low negative relationship between one's age and the daily time spent on the site as well as their daily internet usage. Thus the higher one's age, the less likely they are to spend more time on the site or to have a high internet usage.
+- There is a medium negative relationship between one's income and whether they clicked on an ad. Thus, the higher one's income, the less likely they are to click on ad.
+- There's a medium positive relationship between one's daily  internet usage and the daily time spent on the site. This shows that there's a medium chance that people with a high internet usage would be those spending a lot of time on the site.
+- There is also a medium positive relationship between one's age and whether they clicked on ads. Thus the older one's age, the more like they are to click on an ad, however the realtionship is not too strong.
+
+```{r}
+# Plotting scatterplots to get the distributions of the columns as well as the significance value
+
+chart.Correlation(data_num, histogram = TRUE,)
+
+```
+From the scatterplot above, we can see the significance levels for the different variables, as well as the scatter plots with the fitted lines. 
+We can also see the different distributions for our datasets. 
+
+Conclusion
+
+The most common amount of time spent on the site is 62.26, while the most popular age is 31years. 
+Most of the site visits have an income of 61,833.9. The city with most visitors is Lisamouth while Czech Republic had the most site visitors. Most of the visitors were female, while most didn't click on the ads. The site had most traffic in February.
+The internet users that are most likely to click on our client's ads are those who spend  very little time online. Also the lower ones income is,the higher the chances of them clicking on the ads. The older one is, the more like they are to click on an ad, however the relationship is not too strong.
+
+Recommendations
+
+My recommendation as a data scientist, would be for her to do curate the ads to be mostly on courses that may interest the people most likely to click on the ads as outlined above. She can alsoo include other content so as to pique other users to click more on the ads. 
